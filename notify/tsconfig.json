@@ -1,0 +1,10 @@
+{
+  "extends": "@tsconfig/node22/tsconfig.json",
+  "compilerOptions": {
+    "typeRoots": [
+      "./node_modules/@types",
+      "./.sst/platform/config.d.ts",
+      "./sst-env.d.ts"
+    ]
+  }
+}
