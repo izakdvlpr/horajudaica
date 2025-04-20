@@ -17,7 +17,7 @@ export default $config({
     new sst.aws.Cron(
       "OmerDeHojeNotify",
       {
-        schedule: "cron(30 3 * * ? *)", // cron(0 21 * * ? *) 21:00 UTC = 18:00 BRT
+        schedule: "cron(0 21 * * ? *)", // cron(0 21 * * ? *) 21:00 UTC = 18:00 BRT
         function: {
           handler: "create-email-notification.handler",
           timeout: "5 minutes",
