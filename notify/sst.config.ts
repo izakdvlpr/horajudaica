@@ -10,18 +10,24 @@ export default $config({
     };
   },
   async run() {
-    const oneSignalAppIdSecret = new sst.Secret("ONESIGNAL_APP_ID");
-    const oneSignalAppKeySecret = new sst.Secret("ONESIGNAL_API_KEY");
-
+    const ONESIGNAL_APP_ID = new sst.Secret("ONESIGNAL_APP_ID");
+    const ONESIGNAL_API_KEY = new sst.Secret("ONESIGNAL_API_KEY");
+    const ONESIGNAL_TEMPLATE_ID = new sst.Secret("ONESIGNAL_TEMPLATE_ID");
+    
     new sst.aws.Cron(
       "OmerDeHojeNotify",
       {
-        schedule: "cron(0 21 * * ? *)", // cron(0 21 * * ? *) 21:00 UTC = 18:00 BRT
+        schedule: "cron(30 3 * * ? *)", // cron(0 21 * * ? *) 21:00 UTC = 18:00 BRT
         function: {
-          handler: "index.handler",
+          handler: "create-email-notification.handler",
           timeout: "5 minutes",
-          nodejs: { install: ["@onesignal/node-onesignal"] },
-          link: [oneSignalAppIdSecret, oneSignalAppKeySecret]
+          copyFiles: [{ from: "omer_2025.csv" }],
+          nodejs: { install: ["@onesignal/node-onesignal", "csv-parser"] },
+          link: [
+            ONESIGNAL_APP_ID,
+            ONESIGNAL_API_KEY,
+            ONESIGNAL_TEMPLATE_ID,
+          ]
         },
       }
     );

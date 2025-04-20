@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <h1>Contagem do Omer para {{ message.custom_data.dataGregoriana }} - {{ message.custom_data.dataJudaica }}</h1>
+    
+    <strong>{{ message.custom_data.diaDoOmer }} dias do Ômer</strong>
+    
+    <br />
+    <br />
+   
+    <p>O Omer é contado a cada dia após o anoitecer, da segunda noite de Pêssach até a noite anterior a Shavuot</p>
+    
+    <p>Esqueceu de contar o Omer à noite? Conte no dia seguinte, mas sem a bênção. Nas noites seguintes, continue contando com a benção. A bênção é feita apenas se todos os dias foram contados; se você perdeu um dia, faça a contagem sem a bênção.</p>
+    
+    <br />
+    <br />
+    
+    <strong>BA-RUCH A-TÁ ADO-NAI E-LO-HE-NU ME-LECH HA-OLÁM ASHER KID-E-SHÁ-NU BE-MITS-VO-TÁV VETSI-VÁ-NU AL SEFI-RÁT HA-ÔMER.</strong>
+    
+    <p>Bendito és Tu, Ado-nai, nosso D'us, Rei do universo, que nos santificou com os Seus mandamentos e nos ordenou quanto à contagem do Ômer.</p>
+    
+    <br />
+    <br />
+    
+    <strong>Hoje são {{ message.custom_data.semanasDias }} do Ômer.</strong>
+
+    <br />
+    
+    <strong>{{ message.custom_data.pronuncia }}</strong>
+   
+    <br />
+    <br />
+    <br />
+    
+    <a href="[unsubscribe_url]">
+      <p>Se você não deseja mais receber mensagens, clique aqui para cancelar a inscrição.</p>
+    </a>
+  </body>
+</html>
