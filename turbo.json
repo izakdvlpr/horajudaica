@@ -2,9 +2,12 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
+    "start": {
+      "cache": false,
+      "persistent": true
+    },
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "dev": {
@@ -47,5 +50,12 @@
         "ONESIGNAL_API_KEY"
       ]
     }
-  }
+  },
+  "globalEnv": [
+    "MONGODB_URL",
+    "UPSTASH_REDIS_REST_URL",
+    "UPSTASH_REDIS_REST_TOKEN",
+    "ONESIGNAL_APP_ID",
+    "ONESIGNAL_API_KEY"
+  ]
 }
