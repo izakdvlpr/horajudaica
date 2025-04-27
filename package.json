@@ -1,0 +1,26 @@
+{
+  "name": "horajudaica",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "start": "turbo run start",
+    "check-types": "turbo run check-types"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@9.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "copyfiles": "^2.4.1",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.3",
+    "turbo": "^2.5.0",
+    "typescript": "5.8.2"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@horajudaica/dates",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./typings/index.d.ts",
+  "scripts": {
+    "clean": "rimraf dist typings",
+    "build:types": "tsc -p tsconfig.types.json",
+    "build:files": "tsc",
+    "build": "run-s clean \"build:{types,files}\"",
+    "check-types": "tsc --noEmit"
+  }
+}
