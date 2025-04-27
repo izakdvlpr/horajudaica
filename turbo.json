@@ -36,7 +36,7 @@
         "ONESIGNAL_API_KEY"
       ]
     },
-    "web#build": {
+    "@horajudaica/web#build": {
       "dependsOn": ["@horajudaica/dates#build", "@horajudaica/subscriptions#build"],
       "outputs": [".next/**"],
       "env": [
