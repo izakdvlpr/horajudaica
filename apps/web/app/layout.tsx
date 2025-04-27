@@ -1,6 +1,5 @@
 import "./global.css";
 
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -17,18 +16,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Ômer de hoje",
-  description: "Contagem de dias para o Ômer",
-};
-
-interface RootLayoutProps {
-  children: ReactNode;
-}
-
-export default function RootLayout({
-  children,
-}: RootLayoutProps) {
+export default function RootLayout({ children }: { children: ReactNode; }) {
   return (
     <html lang="en">
       <body className={cn(geistSans.variable, geistMono.variable)}>

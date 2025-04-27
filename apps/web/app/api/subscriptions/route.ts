@@ -4,7 +4,42 @@ import { getOmerToday } from '@horajudaica/dates';
 import { z } from 'zod';
 
 import { type GeoData, getIp, getGeoData } from '@/lib/geo'
-import { blockAction } from '@/lib/ratelimit'
+import { createRateLimit } from '@/lib/ratelimit'
+import { isProdMode } from '@/lib/utils';
+
+function isCronTimeOverToSendEmail() {
+  const now = new Date();
+  const offsetSP = -3 * 60;
+  const nowSP = new Date(now.getTime() + (offsetSP + now.getTimezoneOffset()) * 60000);
+  
+  const hours = nowSP.getHours();
+  const minutes = nowSP.getMinutes();
+  const seconds = nowSP.getSeconds();
+  
+  if ((hours === 18 && minutes >= 0 && seconds >= 0) || (hours === 23 && minutes === 59 && seconds === 59)) {
+    return true;
+  }
+  
+  return false;
+}
+
+async function sendContagemDoOmerEmail(oneSignalSubscriptionId: string) {
+  const omerToday = await getOmerToday();
+     
+  await OneSignal.createEmailNotification({
+    templateId: OneSignal.Templates['contagem-do-omer'],
+    subscriptionId: oneSignalSubscriptionId,
+    subject: `Hora Judaica | Contagem do Ômer - Dia ${omerToday?.diaDoOmer}`,
+    customData: {
+      diaDoOmer: omerToday?.diaDoOmer,
+      dataGregoriana: omerToday?.dataGregoriana,
+      dataJudaica: omerToday?.dataJudaica,
+      semanasDias: omerToday?.semanasDias,
+      pronuncia: omerToday?.pronuncia,
+      subscriptionType: 'contagem-do-omer'
+    }
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,23 +60,21 @@ export async function POST(request: NextRequest) {
     
     let geoData: GeoData | null = null
     
-    if (process.env.NODE_ENV === 'production') {
+    if (isProdMode()) {
       const ip = await getIp()
       
       if (ip) {
         geoData = await getGeoData(ip)
         
-        const ratelimit = await blockAction(ip);
+        const ratelimit = await createRateLimit(ip);
       
-        if (ratelimit.error) {
-          return NextResponse.json({ success: false, error: ratelimit.error }, { status: 429 })
+        if (!ratelimit.success) {
+          return NextResponse.json({ success: false, message: ratelimit.message }, { status: 429 })
         }
       }
     }
     
     const user = await MongoDB.findUserByEmail(userEmail)
-    
-    const templateId = OneSignal.Templates[subscriptionType as keyof typeof OneSignal.Templates]
     
     /**
      * Se não existe usuário
@@ -50,9 +83,8 @@ export async function POST(request: NextRequest) {
      * - Cria inscrição no MongoDB
      * - Vincula inscrição ao usuário no MongoDB
      * - Cria usuário no OneSignal
-     * - Atualiza usuário no MongoDB com o IDs do OneSignal
-     * - Cria notificação no OneSignal
-     * - Atualiza inscrição no MongoDB com a data do último envio
+     * - Atualiza usuário no MongoDB com os IDs do OneSignal
+     * - Cria notificação no OneSignal se for entre 18:00 e 23:59
      */
     if (!user) {
       const userCreated = await MongoDB.createUser({
@@ -66,9 +98,9 @@ export async function POST(request: NextRequest) {
       })
       
       await MongoDB.addSubscriptionToUser(
-        userCreated._id.toString(),
-        subscriptionCreated._id.toString()
-      )
+        userCreated._id,
+        subscriptionCreated._id
+      ).then(data => console.log('addSubscriptionToUser', data))
       
       const oneSignalUserCreated = await OneSignal.createUser({
         email: userEmail,
@@ -83,40 +115,24 @@ export async function POST(request: NextRequest) {
         timeZone: geoData?.timezone,
       })
       
-      const oneSignalSubscriptionId = oneSignalUserCreated.subscriptions?.find(s => s.type === 'Email')?.id as string
       const oneSignalUserId = oneSignalUserCreated.identity?.onesignal_id as string
+      const oneSignalSubscriptionId = oneSignalUserCreated.subscriptions?.find(s => s.type === 'Email')?.id as string
       
-      await MongoDB.updateUserById(userCreated._id.toString(), {
+      await MongoDB.updateUserById(userCreated._id, {
         oneSignal: {
           userId: oneSignalUserId,
           subscriptionId: oneSignalSubscriptionId
         }
       })
       
-      const omerToday = await getOmerToday();
-     
-      await OneSignal.createEmailNotification({
-        templateId,
-        subscriptionId: oneSignalSubscriptionId,
-        subject: `Hora Judaica | Contagem do Ômer - Dia ${omerToday?.diaDoOmer}`,
-        customData: {
-          'diaDoOmer': omerToday?.diaDoOmer,
-          'dataGregoriana': omerToday?.dataGregoriana,
-          'dataJudaica': omerToday?.dataJudaica,
-          'semanasDias': omerToday?.semanasDias,
-          'pronuncia': omerToday?.pronuncia,
-          'subscriptionType': subscriptionType
-        }
-      })
-      
-      await MongoDB.updateSubscriptionById(subscriptionCreated._id.toString(), {
-        lastSentAt: new Date(),
-      })
+      if (isCronTimeOverToSendEmail() && subscriptionType === MongoDB.SubscriptionType.CONTAGEM_DO_OMER) {
+        await sendContagemDoOmerEmail(oneSignalSubscriptionId)
+      }
       
       return NextResponse.json({ success: true })
     }
     
-    const subscription = (user.subscriptions as MongoDB.SubscriptionDocument[]).find((s) => s.type === subscriptionType)
+    const subscription = await MongoDB.findSubscriptionByTypeAndUserId(subscriptionType, user._id)
     
     /**
      * Se já existe usuário porém não tem inscrição com aquele tipo
@@ -124,8 +140,7 @@ export async function POST(request: NextRequest) {
      * - Cria inscrição no MongoDB
      * - Vincula inscrição ao usuário no MongoDB
      * - Atualiza o tipo nas tags do usuário no OneSignal
-     * - Cria notificação no OneSignal
-     * - Atualiza inscrição no MongoDB com a data do último envio
+     * - Cria notificação no OneSignal se for entre 18:00 e 23:59
      */
     if (!subscription) {
       const subscriptionCreated = await MongoDB.createSubscription({
@@ -135,41 +150,22 @@ export async function POST(request: NextRequest) {
       })
       
       await MongoDB.addSubscriptionToUser(
-        user._id.toString(),
-        subscriptionCreated._id.toString()
+        user._id,
+        subscriptionCreated._id
       )
       
       const oneSignalUser = await OneSignal.findUserByEmail(userEmail)
       
-      const oneSignalUserId = user.oneSignal?.userId as string
-      const oneSignalSubscriptionId = user.oneSignal?.subscriptionId as string
-      
-      await OneSignal.updateUserById(oneSignalUserId, {
+      await OneSignal.updateUserById(user.oneSignal?.userId as string, {
         tags: {
           ...oneSignalUser?.properties?.tags,
           [subscriptionType]: 'true',
         } 
       })
       
-      const omerToday = await getOmerToday();
-      
-      await OneSignal.createEmailNotification({
-        templateId,
-        subscriptionId: oneSignalSubscriptionId,
-        subject: `Hora Judaica | Contagem do Ômer - Dia ${omerToday?.diaDoOmer}`,
-        customData: {
-          'diaDoOmer': omerToday?.diaDoOmer,
-          'dataGregoriana': omerToday?.dataGregoriana,
-          'dataJudaica': omerToday?.dataJudaica,
-          'semanasDias': omerToday?.semanasDias,
-          'pronuncia': omerToday?.pronuncia,
-          'subscriptionType': subscriptionType
-        }
-      })
-      
-      await MongoDB.updateSubscriptionById(subscriptionCreated._id.toString(), {
-        lastSentAt: new Date(),
-      })
+      if (isCronTimeOverToSendEmail() && subscriptionType === MongoDB.SubscriptionType.CONTAGEM_DO_OMER) {
+        await sendContagemDoOmerEmail(user.oneSignal?.subscriptionId as string)
+      }
       
       return NextResponse.json({ success: true })
     }
@@ -179,46 +175,26 @@ export async function POST(request: NextRequest) {
      * 
      * - Atualiza inscrição no MongoDB
      * - Atualiza o tipo nas tags do usuário no OneSignal
-     * - Cria notificação no OneSignal
-     * - Atualiza inscrição no MongoDB com a data do último envio
+     * - Cria notificação no OneSignal se for entre 18:00 e 23:59
      */
     if (!subscription.enabled && subscription.unsubscribedAt) {
-      await MongoDB.updateSubscriptionById(subscription._id.toString(), {
+      await MongoDB.updateSubscriptionById(subscription._id, {
         enabled: true,
         unsubscribedAt: null
       })
       
       const oneSignalUser = await OneSignal.findUserByEmail(userEmail)
       
-      const oneSignalUserId = user.oneSignal?.userId as string
-      const oneSignalSubscriptionId = user.oneSignal?.subscriptionId as string
-      
-      await OneSignal.updateUserById(oneSignalUserId, {
+      await OneSignal.updateUserById(user.oneSignal?.userId as string, {
         tags: {
           ...oneSignalUser?.properties?.tags,
           [subscriptionType]: 'true',
         } 
       })
       
-      const omerToday = await getOmerToday();
-      
-      await OneSignal.createEmailNotification({
-        templateId,
-        subscriptionId: oneSignalSubscriptionId,
-        subject: `Hora Judaica | Contagem do Ômer - Dia ${omerToday?.diaDoOmer}`,
-        customData: {
-          'diaDoOmer': omerToday?.diaDoOmer,
-          'dataGregoriana': omerToday?.dataGregoriana,
-          'dataJudaica': omerToday?.dataJudaica,
-          'semanasDias': omerToday?.semanasDias,
-          'pronuncia': omerToday?.pronuncia,
-          'subscriptionType': subscriptionType
-        }
-      })
-      
-      await MongoDB.updateSubscriptionById(subscription._id.toString(), {
-        lastSentAt: new Date(),
-      })
+      if (isCronTimeOverToSendEmail() && subscriptionType === MongoDB.SubscriptionType.CONTAGEM_DO_OMER) {
+        await sendContagemDoOmerEmail(user.oneSignal?.subscriptionId as string)
+      }
       
       return NextResponse.json({ success: true })
     }
@@ -254,7 +230,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Inscrição não encontrada.' }, { status: 404 })
     }
     
-    const subscription = (user.subscriptions as MongoDB.SubscriptionDocument[]).find((s) => s.type === subscriptionType)
+    const subscription = await MongoDB.findSubscriptionByTypeAndUserId(subscriptionType, user._id)
     
     if (!subscription) {
       return NextResponse.json({ success: false, message: 'Inscrição não encontrada.' }, { status: 404 })
@@ -275,7 +251,7 @@ export async function DELETE(request: NextRequest) {
       } 
     })
     
-    await MongoDB.updateSubscriptionById(subscription._id.toString(), {
+    await MongoDB.updateSubscriptionById(subscription._id, {
       enabled: false,
       unsubscribedAt: new Date()
     })

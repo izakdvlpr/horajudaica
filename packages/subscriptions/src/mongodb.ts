@@ -51,8 +51,7 @@ export namespace MongoDB {
     _id: mongoose.Types.ObjectId
     type: SubscriptionType
     enabled: boolean
-    user?: mongoose.Types.ObjectId | UserDocument
-    lastSentAt: Date | null
+    user: mongoose.Types.ObjectId | UserDocument
     subscribedAt: Date
     unsubscribedAt: Date | null
   }
@@ -78,7 +77,6 @@ export namespace MongoDB {
       type: { type: String, enum: Object.values(SubscriptionType), required: true },
       enabled: { type: Boolean, required: true, default: true },
       user: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
-      lastSentAt: { type: Date, required: false, default: null },
       unsubscribedAt: { type: Date, required: false, default: null },
       subscribedAt: { type: Date, required: true, default: new Date() },
     },
@@ -121,19 +119,19 @@ export namespace MongoDB {
   }
   
   export async function updateUserById(
-    id: string,
+    _id: mongoose.Types.ObjectId,
     data: Partial<Pick<UserDocument, 'oneSignal'>>
   ): Promise<UserDocument> {
     await connectToMongo()
     
-    await UserModel.updateOne({ _id: id }, data)
+    await UserModel.updateOne({ _id }, data)
     
-    const user = await UserModel.findById(id).populate('subscriptions').lean()
+    const user = await UserModel.findById(_id).populate('subscriptions').lean()
     
     return user as UserDocument
   }
   
-  export async function addSubscriptionToUser(userId: string, subscriptionId: string): Promise<UserDocument> {
+  export async function addSubscriptionToUser(userId: mongoose.Types.ObjectId, subscriptionId: mongoose.Types.ObjectId): Promise<UserDocument> {
     await connectToMongo()
     
     await UserModel.updateOne({ _id: userId }, {
@@ -152,28 +150,36 @@ export namespace MongoDB {
     
     await SubscriptionModel.create(data)
     
-    const subscription = await SubscriptionModel.findOne({ type: data.type }).populate('user').lean()
+    const subscription = await SubscriptionModel.findOne({ type: data.type, user: data.user }).populate('user').lean()
     
     return subscription as SubscriptionDocument
   }
   
-  export async function findSubscriptionById(id: string): Promise<SubscriptionDocument | null> {
+  export async function findSubscriptionById(_id: mongoose.Types.ObjectId): Promise<SubscriptionDocument | null> {
     await connectToMongo()
     
-    const subscription = await SubscriptionModel.findById(id).populate('user').lean()
+    const subscription = await SubscriptionModel.findById(_id).populate('user').lean()
+    
+    return subscription ?? null
+  }
+  
+  export async function findSubscriptionByTypeAndUserId(type: SubscriptionType, userId: mongoose.Types.ObjectId): Promise<SubscriptionDocument | null> {
+    await connectToMongo()
+    
+    const subscription = await SubscriptionModel.findOne({ type, user: userId }).populate('user').lean()
     
     return subscription ?? null
   }
   
   export async function updateSubscriptionById(
-    id: string,
-    data: Partial<Pick<SubscriptionDocument, 'enabled' | 'lastSentAt' | 'unsubscribedAt'>>
+    _id: mongoose.Types.ObjectId,
+    data: Partial<Pick<SubscriptionDocument, 'enabled' | 'unsubscribedAt'>>
   ): Promise<SubscriptionDocument> {
     await connectToMongo()
     
-    await SubscriptionModel.updateOne({ _id: id }, data)
+    await SubscriptionModel.updateOne({ _id }, data)
     
-    const subscription = await SubscriptionModel.findById(id).populate('user').lean()
+    const subscription = await SubscriptionModel.findById(_id).populate('user').lean()
     
     return subscription as SubscriptionDocument
   }

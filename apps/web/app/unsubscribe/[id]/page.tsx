@@ -20,8 +20,8 @@ export default function HomePage() {
     try {
       await axios.delete('/api/subscriptions', {
         data: {
-          oneSignalSubscriptionId: params?.id,
           subscriptionType: searchParams?.get('subscriptionType'),
+          oneSignalSubscriptionId: params?.id,
         }
       })
       
@@ -45,12 +45,8 @@ export default function HomePage() {
   
   return (
     <main className="h-screen w-full flex flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-bold text-center">
-        Desinscreva-se da Contagem do Ômer
-      </h1>
-      
-      <h2 className="text-sm">
-        Você não receberá mais e-mails com a contagem do Ômer.
+      <h2 className="text-lg">
+        Você não receberá mais e-mails.
       </h2>
         
       <Button

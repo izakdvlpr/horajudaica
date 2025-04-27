@@ -2,14 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
-  transpilePackages: ['@horajudaica/subscriptions'],
-  webpack(config, { isServer }) {
-    if (!isServer) {
-      config.externals.push('handlebars');
-    }
-    
-    return config;
-  },
+  redirects: async () => {
+    return [
+      {
+        source: '/',
+        destination: '/contagem-do-omer',
+        permanent: true,
+      }
+    ];
+  }
 };
 
 export default nextConfig;

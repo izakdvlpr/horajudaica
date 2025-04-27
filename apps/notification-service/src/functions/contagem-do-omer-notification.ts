@@ -22,7 +22,7 @@ export const handler: Handler = async () => {
       }
     });
   
-    console.log('Emails enviados.', notification.id);
+    console.log('Emails enviados.', notification?.id ?? null);
     
     return {
       body: JSON.stringify({ message: 'Emails enviados!' }),
