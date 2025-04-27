@@ -16,22 +16,36 @@
     },
     "@horajudaica/dates#build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "@horajudaica/subscriptions#build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "web#build": {
-      "dependsOn": ["@horajudaica/dates#build", "@horajudaica/subscriptions#build"],
+      "outputs": ["dist/**"],
       "env": [
         "MONGODB_URL",
         "UPSTASH_REDIS_REST_URL",
         "UPSTASH_REDIS_REST_TOKEN",
         "ONESIGNAL_APP_ID",
         "ONESIGNAL_API_KEY"
-      ],
-      "outputs": [".next/**"]
+      ]
+    },
+    "@horajudaica/subscriptions#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "env": [
+        "MONGODB_URL",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "ONESIGNAL_APP_ID",
+        "ONESIGNAL_API_KEY"
+      ]
+    },
+    "web#build": {
+      "dependsOn": ["@horajudaica/dates#build", "@horajudaica/subscriptions#build"],
+      "outputs": [".next/**"],
+      "env": [
+        "MONGODB_URL",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "ONESIGNAL_APP_ID",
+        "ONESIGNAL_API_KEY"
+      ]
     }
   }
 }
