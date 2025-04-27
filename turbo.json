@@ -24,6 +24,13 @@
     },
     "web#build": {
       "dependsOn": ["@horajudaica/dates#build", "@horajudaica/subscriptions#build"],
+      "env": [
+        "MONGODB_URL",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "ONESIGNAL_APP_ID",
+        "ONESIGNAL_API_KEY"
+      ],
       "outputs": [".next/**"]
     }
   }
