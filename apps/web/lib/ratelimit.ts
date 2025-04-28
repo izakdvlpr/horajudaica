@@ -4,7 +4,7 @@ import { redis } from './redis';
 
 const ratelimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.fixedWindow(2, '10m')
+  limiter: Ratelimit.fixedWindow(10, '10m')
 });
 
 export async function createRateLimit(geoIp: string) {

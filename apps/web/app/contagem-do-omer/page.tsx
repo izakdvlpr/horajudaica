@@ -45,8 +45,8 @@ export default function HomePage() {
   
   return (
     <main className="h-screen w-full flex flex-col items-center justify-center gap-4">
-      <span className='text-8xl'>
-      🇮🇱 🌾 🕎
+      <span className='text-8xl text-center'>
+        🇮🇱 🌾
       </span>
       
       <h1 className="text-2xl font-bold text-center">
