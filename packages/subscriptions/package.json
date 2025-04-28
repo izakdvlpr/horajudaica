@@ -1,7 +1,6 @@
 {
   "name": "@horajudaica/subscriptions",
-  "version": "1.0.0",
-  "private": true,
+  "version": "1.0.1",
   "main": "./dist/index.js",
   "types": "./typings/index.d.ts",
   "scripts": {
@@ -10,6 +9,15 @@
     "build:files": "tsc",
     "build": "run-s clean \"build:{types,files}\"",
     "check-types": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "typings",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
     "@onesignal/node-onesignal": "^5.0.0-alpha-02",
