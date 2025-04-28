@@ -1,8 +1,7 @@
+import { Resource } from 'sst';
 import type { Handler } from 'aws-lambda';
 import { OneSignal } from '@horajudaica/subscriptions';
 import { getOmerToday } from '@horajudaica/dates';
-
-import { isDevMode } from '../utils/isDevMode';
 
 export const handler: Handler = async () => {
   const omerToday = await getOmerToday();
@@ -11,7 +10,9 @@ export const handler: Handler = async () => {
     const notification = await OneSignal.createEmailNotification({
       templateId: OneSignal.Templates['contagem-do-omer'],
       subject: `Hora Judaica | Contagem do Ômer - Dia ${omerToday?.diaDoOmer}`,
-      segmentName: isDevMode ? OneSignal.Segments.TEST_USERS : OneSignal.Segments.CONTAGEM_DO_OMER,
+      segmentName: Resource.App.stage === 'development' 
+        ? OneSignal.Segments.TEST_USERS 
+        : OneSignal.Segments.CONTAGEM_DO_OMER,
       customData: {
         diaDoOmer: omerToday?.diaDoOmer,
         dataGregoriana: omerToday?.dataGregoriana,

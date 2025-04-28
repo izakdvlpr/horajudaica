@@ -5,11 +5,10 @@ export default $config({
     return {
       name: "horajudaica",
       removal: input?.stage === "production" ? "retain" : "remove",
-      protect: ["production"].includes(input?.stage),
       home: "aws",
     };
   },
   async run() {
-    await import("./src/infra/cron");
+    await import("./src/infra/cron")
   },
 });
