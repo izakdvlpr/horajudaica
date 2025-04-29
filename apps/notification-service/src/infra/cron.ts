@@ -3,7 +3,7 @@ export const cron = new sst.aws.Cron(
   {
     schedule: $app.stage === 'development' 
       ? 'rate(1 minute)'
-      : 'cron(0 21 * * ? *)', // 21:00 UTC = 18:00 BRT
+      : 'cron(0 20 * * ? *)', // 20:00 UTC = 17:00 BRT
     function: {
       handler: './src/functions/contagem-do-omer-notification.handler',
       timeout: '2 minutes',
