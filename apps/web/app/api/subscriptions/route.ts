@@ -9,14 +9,18 @@ import { isProdMode } from '@/lib/utils';
 
 function isCronTimeOverToSendEmail() {
   const now = new Date();
-  const offsetSP = -3 * 60;
+  const offsetSP = -3 * 60; // UTC-3 para São Paulo
   const nowSP = new Date(now.getTime() + (offsetSP + now.getTimezoneOffset()) * 60000);
   
   const hours = nowSP.getHours();
   const minutes = nowSP.getMinutes();
   const seconds = nowSP.getSeconds();
-  
-  if ((hours === 18 && minutes >= 0 && seconds >= 0) || (hours === 23 && minutes === 59 && seconds === 59)) {
+
+  if (hours >= 18 && hours <= 23) {
+    if (hours === 23) {
+      return minutes <= 59 && seconds <= 59;
+    }
+    
     return true;
   }
   
